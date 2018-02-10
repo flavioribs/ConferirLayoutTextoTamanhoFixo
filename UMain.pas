@@ -24,7 +24,7 @@ uses
   cxStyles, dxSkinscxPCPainter, cxCustomData, cxFilter, cxData,
   cxDataStorage, cxNavigator, cxDBData, cxGridCustomTableView,
   cxGridTableView, cxGridDBTableView, cxGridLevel, cxClasses,
-  cxGridCustomView, cxGrid, Vcl.Menus, shellapi;
+  cxGridCustomView, cxGrid, Vcl.Menus, shellapi, inifiles;
 
 type
   TfrmMain = class(TForm)
@@ -98,35 +98,69 @@ end;
 procedure TfrmMain.ValidarLayout;
 var
   stl: TStringList;
-  sText: String;
+  sText, sValidacao: String;
   iTamanhoEncontrado: Integer;
 begin
   if SaveDlgResultado.Execute then
    begin
     stl := TStringList.Create;
-    stl.add('<html><head><title>Resultado da Validação do Registro</title></head><body>');
+
+    stl.add('<!doctype html>');
+    stl.add('<html lang="en">');
+    stl.add('  <head>');
+    stl.add('    <!-- Required meta tags -->');
+    stl.add('    <meta charset="ISO-8859-1">');
+    stl.add('    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">');
+    stl.add(' ');
+    stl.add('    <!-- Bootstrap CSS -->');
+    stl.add('    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">');
+    stl.add(' ');
+    stl.add('    <title>Resultado da Validação do Registro</title>');
+    stl.add('  </head>');
+    stl.add('  <body>');
+    stl.add('    <h1>Resultado da Validação do Registro</h1>');
+    stl.add(' ');
+    stl.add(Format('	<div><b>Linha a Ser Validada: %s</b></div>', [QuotedStr(edtTextoParaValidar.Text)]));
+    stl.add(' ');
+    stl.add('	<table border="1" border-style="single"><tr><td>Identificacao</td><td>Descrição</td><td>Posição Inicial</td><td>Tamanho</td><td>Tamanho Encontrado</td><td>Validação</td><td>Texto</td></tr>');
 
     try
      if (cdsLayout.RecordCount > 0) and (edtTextoParaValidar.Text <> '') then
       begin
-       stl.add(Format('<div><b>Linha a Ser Validada: %s</b></div>', [edtTextoParaValidar.Text]));
-       stl.add('<table><tr><td>Identificacao</td><td>Descrição</td><td>Posição Inicial</td><td>Tamanho</td><td>Tamanho Encontrado</td><td>Texto</td></tr>');
        cdsLayout.First;
        while not cdsLayout.Eof do
         begin
+         sValidacao := '';
          sText := Copy(edtTextoParaValidar.Text, cdsLayoutPosicaoInicial.AsInteger, cdsLayoutTamanho.AsInteger);
          iTamanhoEncontrado := Length(sText);
 
-         stl.add(Format('<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%s</td></tr>',
-                 [cdsLayoutid.AsInteger, cdsLayoutDescricao.AsString, cdsLayoutPosicaoInicial.AsInteger, cdsLayoutTamanho.AsInteger, iTamanhoEncontrado, QuotedStr(sText)]));
+         if (cdsLayoutTamanho.AsInteger <> iTamanhoEncontrado) then
+          sValidacao := 'Tamanho do campo incorreto. ';
+
+         if (cdsLayoutValoresValidos.AsString <> '') then
+          begin
+           if (cdsLayoutValoresValidos.AsString <> sText) then
+            sValidacao := sValidacao + 'Valor incorreto para o campo. ';
+          end;
+
+         stl.add(Format('		<tr><td>%d</td><td>%s</td><td>%d</td><td>%d</td><td>%d</td><td>%s</td><td>%s</td></tr>',
+                 [cdsLayoutid.AsInteger, cdsLayoutDescricao.AsString, cdsLayoutPosicaoInicial.AsInteger, cdsLayoutTamanho.AsInteger, iTamanhoEncontrado, sValidacao, QuotedStr(sText)]));
 
          cdsLayout.Next;
         end;
 
-       stl.add('</table></body></html>');
+       stl.add('	</table>');
+       stl.add(' ');
+       stl.add('    <!-- Optional JavaScript -->');
+       stl.add('    <!-- jQuery first, then Popper.js, then Bootstrap JS -->');
+       stl.add('    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>');
+       stl.add('    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>');
+       stl.add('    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>');
+       stl.add('  </body>');
+       stl.add('</html>');
 
        stl.SaveToFile(SaveDlgResultado.FileName);
-       ShellExecute(handle,'open',PChar(edtTextoParaValidar.Text), '','',SW_SHOWNORMAL);
+       ShellExecute(handle,'open',PChar(SaveDlgResultado.FileName), '','',SW_SHOWNORMAL);
 
        ShowMessage('Validação concluída!');
       end
@@ -138,10 +172,18 @@ begin
 end;
 
 procedure TfrmMain.CarregarLayout1Click(Sender: TObject);
+var
+  Ini: TIniFile;
 begin
   if OpenDlg.Execute then
    begin
-    cdsLayout.LoadFromFile(OpenDlg.FileName);
+    try
+     Ini := TIniFile.Create(ChangeFileExt(OpenDlg.FileName, '.INI'));
+     edtTextoParaValidar.Text := Ini.ReadString('Config', 'TextoValidacao', '');
+     cdsLayout.LoadFromFile(OpenDlg.FileName);
+    finally
+     Ini.Free;
+    end;
    end;
 end;
 
@@ -151,10 +193,18 @@ begin
 end;
 
 procedure TfrmMain.SalvarLayout1Click(Sender: TObject);
+var
+  Ini: TIniFile;
 begin
   if SaveDlg.Execute then
    begin
-    cdsLayout.SaveToFile(SaveDlg.FileName, dfxml);
+    try
+     Ini := TIniFile.Create(ChangeFileExt(SaveDlg.FileName, '.INI'));
+     Ini.WriteString('Config', 'TextoValidacao', edtTextoParaValidar.Text);
+     cdsLayout.SaveToFile(SaveDlg.FileName, dfxml);
+    finally
+     Ini.Free;
+    end;
    end;
 end;
 

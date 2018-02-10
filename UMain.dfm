@@ -28,8 +28,6 @@ object frmMain: TfrmMain
     BevelOuter = bvLowered
     ParentColor = True
     TabOrder = 0
-    ExplicitTop = 165
-    ExplicitWidth = 410
     DesignSize = (
       1009
       43)
@@ -1120,7 +1118,6 @@ object frmMain: TfrmMain
         CACACACACACACACACACACACACACACACACACACACACACACACACAFF}
       NumGlyphs = 2
       PopupMenu = ppmExtras
-      Visible = False
       OnClick = btnExtrasClick
     end
   end
@@ -1140,7 +1137,6 @@ object frmMain: TfrmMain
       Top = 16
       Anchors = [akLeft, akTop, akRight]
       TabOrder = 0
-      ExplicitWidth = 976
       Width = 966
     end
   end
@@ -1161,6 +1157,7 @@ object frmMain: TfrmMain
       Width = 967
       Height = 392
       Anchors = [akLeft, akTop, akRight, akBottom]
+      PopupMenu = ppmExtras
       TabOrder = 0
       object grdLayout: TcxGridDBTableView
         Navigator.Buttons.CustomButtons = <>
@@ -1168,24 +1165,28 @@ object frmMain: TfrmMain
         DataController.Summary.DefaultGroupSummaryItems = <>
         DataController.Summary.FooterSummaryItems = <>
         DataController.Summary.SummaryGroups = <>
+        OptionsView.CellAutoHeight = True
+        OptionsView.ColumnAutoWidth = True
         OptionsView.GroupByBox = False
         object grdLayoutid: TcxGridDBColumn
           DataBinding.FieldName = 'id'
-          Width = 44
+          Width = 72
         end
         object grdLayoutDescricao: TcxGridDBColumn
           DataBinding.FieldName = 'Descricao'
-          Width = 491
+          Width = 212
         end
         object grdLayoutPosicaoInicial: TcxGridDBColumn
           DataBinding.FieldName = 'PosicaoInicial'
-          Width = 82
+          Width = 80
         end
         object grdLayoutTamanho: TcxGridDBColumn
           DataBinding.FieldName = 'Tamanho'
+          Width = 84
         end
         object grdLayoutValoresValidos: TcxGridDBColumn
           DataBinding.FieldName = 'ValoresValidos'
+          Width = 517
         end
       end
       object grdLayoutArquivoLevel1: TcxGridLevel
@@ -1195,7 +1196,16 @@ object frmMain: TfrmMain
   end
   object cdsLayout: TClientDataSet
     Aggregates = <>
+    FieldDefs = <>
+    IndexDefs = <
+      item
+        Name = 'cdsLayoutIndex1'
+        Fields = 'ID'
+        Options = [ixPrimary]
+      end>
+    IndexName = 'cdsLayoutIndex1'
     Params = <>
+    StoreDefs = True
     Left = 178
     Top = 122
     object cdsLayoutid: TIntegerField
